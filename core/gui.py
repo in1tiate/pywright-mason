@@ -323,6 +323,7 @@ class editbox(widget):
         else:
             v = v[:self.carat]+v[self.carat+1:]
         self.set(v)
+        self.carat -= 1
     def set(self,v):
         if not self.is_dict:
             setattr(self.target_ob,self.target_attr,v)

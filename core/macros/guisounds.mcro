@@ -47,7 +47,7 @@ sfx Cancel.ogg volume=70
 endmacro
 
 macro sound_court_record_zoom
-sfx Scroll.ogg volume=70
+sfx Ev.ogg volume=70
 endmacro
 
 macro sound_court_record_check

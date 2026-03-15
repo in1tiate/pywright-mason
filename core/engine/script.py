@@ -204,12 +204,12 @@ assert EVAL_EXPR(EXPR("5 <= 6"))=="true"
 def interpret_scripts():
     """Process wrightscript until we should block and show action on the screen"""
     while 1:
-        print "processing..."
+        #print "processing..."
         if not assets.cur_script:
             return
         block = assets.cur_script.interpret_line()
         if block:
-            print "BLOCKING"
+            #print "BLOCKING"
             return
 
 class Script(gui.widget):
@@ -342,6 +342,8 @@ class Script(gui.widget):
         self.held = []
         #~ if vtrue(assets.variables.get("_preload","on")):
             #~ self.preload()
+            
+        print "START:",repr(self)
         if scene:
             try:
                 self.scriptlines = assets.open_script(scene,macros,ext)
@@ -430,7 +432,7 @@ class Script(gui.widget):
                     if o.cur_script==self: 
                         add_exceptions()
                         self.buildmode = False
-                        print "setting buildmode to false"
+                        #print "setting buildmode to false"
                         return False
             except (art_error,script_error),e:
                 exceptions.append(error_msg(e.value,self.lastline_value,self.si,self))
@@ -595,7 +597,8 @@ char test
                 self.execute_macro("tboff")
         tbox.init_gui()
         tbox.update(0)
-        return True
+        if tbox.will_block():
+            return True
     def execute_line(self,line):
         if not line:
             return
@@ -632,16 +635,20 @@ char test
             self.obs.append(error_msg("Invalid command:"+command,line,self.si,self))
             return True
     def execute_macro(self,macroname,args="",obs=None):
-        mlines = self.macros.get(macroname,None)
-        if not mlines: return
         print "     EXECUTE MACRO:    ",macroname,"from",self.scene
         if args: args = " "+args
-        nscript = assets.Script(self)
-        nscript.world = self.world
         scriptlines = ["{"+macroname+args+"}"]
         assets.replace_macros(scriptlines,self.macros)
-        nscript.init(scriptlines=scriptlines)
-        nscript.scene = self.scene+"/"+macroname
+        return self.add_child_script(scriptlines=scriptlines,scenename=self.scene+"/"+macroname)
+    def add_child_script(self,scene="",scriptlines=[],scenename=None):
+        if not scene and not scriptlines:
+            return
+        if not scenename:
+            scenename = self.scene+"/child"
+        nscript = assets.Script(self)
+        nscript.world = self.world
+        nscript.init(scene=scene,scriptlines=scriptlines)
+        nscript.scene = scenename
         nscript.macros = self.macros
         assets.stack.append(nscript)
         nscript.buildmode = True
@@ -1949,7 +1956,12 @@ The four types of gui you can create are:
         keyword allows you to choose which health bar the penalty command is referring to.
         
         Since it just uses variables, you can also change the health bar values behind the scenes without showing
-        the penalty bar at all, by just using the normal variable commands. The default penalty variable is 'penalty'."""
+        the penalty bar at all, by just using the normal variable commands. The default penalty variable is 'penalty'.
+        
+        If the variable _penalty_script is set, PyWright will automatically run that script if the penalty bar runs out.
+        'set _penalty_script gameover' - penalty will run the gameover.script.txt or gameover.txt 
+        'set _penalty_script gameover second' - penalty will run the gameover.txt script, but also jump to the label
+                                                             named 'second'"""
         var = "penalty"
         flash_amount = 0
         delay = None
@@ -2156,7 +2168,7 @@ the speed would divide evenly over the distance)."""
             scr.control_last()
         if name:
             scr.control(name)
-        if wait: 
+        if wait and ((x and abs(speed)<x) or (y and abs(speed)<y) or (z and abs(speed)<z)): 
             return True
     @category([COMBINED("filename","Filename of song, searches game/case/music, game/music, and PyWright/music","If no path is listed, music will stop")],type="music")
     def _mus(self,command,*song):

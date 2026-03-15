@@ -64,7 +64,7 @@ class Registry:
         for sub in filepaths:
             print "check",sub
             if os.path.isdir(root+"/"+sub) or zipfile.is_zipfile(root+"/"+sub):
-                self.index(root+"/"+sub)
+                self.index(root+"/"+sub,progress_function)
             progress_function()
         global_registry_cache[root] = [self.map,self.ext_map]
     def list_files(self,path):
@@ -72,7 +72,7 @@ class Registry:
             return os.listdir(path)
         if zipfile.is_zipfile(path):
             return zipfile.ZipFile(path,"r").namelist()
-    def index(self,path):
+    def index(self,path,progress_function=lambda:1):
         in_zip = zipfile.is_zipfile(path)
         subdirs = []
         self.mapfile(path+"/",in_zip)
@@ -83,6 +83,7 @@ class Registry:
                 subdirs.append(path+"/"+sub)
             else:
                 self.mapfile(path+"/"+sub,in_zip)
+                progress_function()
         for sub in subdirs:
             self.index(sub)
     def list_dir(self,path):

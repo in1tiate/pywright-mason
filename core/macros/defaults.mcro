@@ -1,4 +1,4 @@
-#Copy this file into your game directory and edit the values from there
+﻿#Copy this file into your game directory and edit the values from there
 #It's a bit safer and clearer than changing these values in the middle of the case
 
 #Below variables control various things about how things look
@@ -30,7 +30,7 @@ set _default_frame_delay 6
 
 #Images to use for interface items
 set _list_checked_img general/checkmark
-set _list_bg_image general/black
+set _list_bg_image bg/main2
 set _list_checked_x -10
 set _list_checked_y -10
 set _bigbutton_img general/buttonpress
