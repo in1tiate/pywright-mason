@@ -7,7 +7,7 @@ is _ver = 0.9890 latest
 goto update
 
 label latest
-textblock 0 170 256 0 color=594 name=txt1      Sempiterna Mod version 0.0.1
+textblock 0 170 256 0 color=594 name=txt1       MASON system version 0.0.2
 goto continue
 
 label continue

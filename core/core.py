@@ -1948,7 +1948,8 @@ class textbox(gui.widget):
         self.id_name = "_textbox_"
         self.is_cross = False
         
-        self.bliprate = int(assets.variables.get("_textbox_bliprate","1"))
+        # Note: 2 is closest to what the blips sounded like when they were broken pre mason beta 02
+        self.bliprate = int(assets.variables.get("_textbox_bliprate","2"))
         self.bliptick = 0
     def init_cross(self):
         self.is_cross = True
