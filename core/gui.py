@@ -55,7 +55,8 @@ class widget(object):
     def __init__(self,pos=[0,0],size=[0,0],parent=None):
         try:
             self.rpos = pos[:]
-        except AttributeError:
+        except AttributeError as x:
+            print("error: " + str(x))
             pass
         self.font = ft
         self.parent = parent

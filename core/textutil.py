@@ -145,7 +145,7 @@ assert str(markup_text_list([markup_text("Some text."),markup_text("Some more te
 class ImgFont(object):
     lastcolor = [255,255,255]
     prevcolor = [255,255,255]
-    def __init__(self,img,pwfont=None):
+    def __init__(self,img,fontname="pwinternational.ttf",pwfont=None):
         self.img = pygame.image.load(img)
         self.img.set_colorkey([255,255,255])
         self.colors = {}
@@ -155,6 +155,7 @@ class ImgFont(object):
         self.width = {"":0}
         self.start = {}
         self.quote = 0
+        self.fn = fontname
         if pwfont:
             self.fnt = pwfont
         else:
@@ -175,6 +176,9 @@ class ImgFont(object):
         #FIXME: hack for shorter spaces with pwinternational font, better is to fix the actual font
         if t==" ":
             self.width[t] = 3
+        # sempiterna: igiari-cyrillic.ttf hack to fix letter spacing
+        if t=="j" and self.fn == "igiari-cyrillic.ttf":
+            self.width[t] = 5
         self.start[t] = start
         self.colors[t,tuple(color)] = surf
         return surf

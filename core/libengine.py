@@ -25,7 +25,7 @@ except:
 
 d = get_data_from_folder(".")
 __version__ = d["version"]
-VERSION = "Version "+cver_s(d["version"])
+VERSION = "Sempiterna "+cver_s(d["version"])
 clock = pygame.time.Clock()
 
 #FIXME - these are temporary until moved
@@ -236,9 +236,10 @@ def make_start_script(logo=True):
     assets.draw_screen(False)
     try:
         import urllib2
-        online_script = urllib2.urlopen("http://pywright.dawnsoft.org/updates3/stream/intro_0977.txt",timeout=2)
-        introlines = online_script.read().split("\n")
-        online_script.close()
+        #online_script = urllib2.urlopen("http://pywright.dawnsoft.org/updates3/stream/intro_0977.txt",timeout=2)
+        with open ('update_intro.txt', 'r') as file: 
+            introlines = file.read().split("\n")
+        file.close()
         scenename = "web://intro_0977.txt"
     except:
         import traceback
@@ -507,7 +508,7 @@ linecache,encodings.aliases,exceptions,sre_parse,os,goodkeys,k,core,libengine".s
                 for o in assets.cur_script.upobs:
                     if hasattr(o,"enter_hold"):
                         o.enter_hold()
-            keybinds = {"keydown":{},"keyup":{},"keyhold":{},"joybuttonup":{},"joybuttondown":{},"joyhatmotion":{}}
+            keybinds = {"keydown":{},"keyup":{},"keyhold":{},"joybuttonup":{},"joybuttondown":{},"joyhatmotion":{},"diagonals":{}}
             keybinds["keydown"][pygame.K_ESCAPE] = "toggle_settings"
             #keybinds["keydown"][pygame.K_m] = "toggle_settings"
             keybinds["keyup"][pygame.K_RETURN] = "enter_up"
@@ -531,9 +532,20 @@ linecache,encodings.aliases,exceptions,sre_parse,os,goodkeys,k,core,libengine".s
             keybinds["joybuttondown"][4] = "press"
             keybinds["keydown"][pygame.K_x] = "present"
             keybinds["joybuttondown"][5] = "present"
+            # Diagonal keypress handlers
+            keybinds["diagonals"][(pygame.K_UP, pygame.K_RIGHT)] = "k_upright"
+            keybinds["diagonals"][(pygame.K_UP, pygame.K_LEFT)] = "k_upleft"
+            keybinds["diagonals"][(pygame.K_DOWN, pygame.K_LEFT)] = "k_downleft"
+            keybinds["diagonals"][(pygame.K_DOWN, pygame.K_RIGHT)] = "k_downright"
             for k in keybinds["keydown"]:
                 if pygame.key.get_pressed()[k]:
                     evt = keybinds["keydown"][k]+"_hold"
+                    for o in assets.cur_script.upobs:
+                        if hasattr(o,evt):
+                            getattr(o,evt)()
+            for k in keybinds["diagonals"]:
+                if pygame.key.get_pressed()[k[0]] and pygame.key.get_pressed()[k[1]]:
+                    evt = keybinds["diagonals"][k]+"_hold"
                     for o in assets.cur_script.upobs:
                         if hasattr(o,evt):
                             getattr(o,evt)()

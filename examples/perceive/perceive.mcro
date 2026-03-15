@@ -226,7 +226,7 @@ endmacro
 
 macro _saur_move_left
 
-scroll name=big x=8 speed=8
+scroll name=big x=8 nowait
 
 subvar _saur_ox 8
 {perc_debug}
@@ -237,7 +237,7 @@ endmacro
 
 macro _saur_move_right
 
-scroll name=big x=-8 speed=8
+scroll name=big x=-8 nowait
 
 addvar _saur_ox 8
 {perc_debug}
@@ -248,7 +248,7 @@ endmacro
 
 macro _saur_move_up
 
-scroll name=big y=8 speed=8
+scroll name=big y=8 nowait
 
 subvar _saur_oy 8
 {perc_debug}
@@ -259,7 +259,7 @@ endmacro
 
 macro _saur_move_down
 
-scroll name=big y=-8 speed=8
+scroll name=big y=-8 nowait
 
 addvar _saur_oy 8
 {perc_debug}

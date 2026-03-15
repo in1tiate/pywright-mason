@@ -1,0 +1,17 @@
+set _ver 0.974
+isempty _version empty
+set _ver $_version
+label empty
+
+is _ver = 0.9890 latest
+goto update
+
+label latest
+textblock 0 170 256 0 color=594 name=txt1      Sempiterna Mod version 0.0.1
+goto continue
+
+label continue
+textblock 20 0 256 0 color=999 name=help Press ESC for options
+
+rand_text
+

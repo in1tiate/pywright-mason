@@ -342,8 +342,8 @@ class Script(gui.widget):
         self.held = []
         #~ if vtrue(assets.variables.get("_preload","on")):
             #~ self.preload()
-            
-        print "START:",repr(self)
+        if vtrue(assets.variables.get("_jfe_no_verbose_logs","false")):
+            print "START:",repr(self)
         if scene:
             try:
                 self.scriptlines = assets.open_script(scene,macros,ext)
@@ -498,6 +498,9 @@ class Script(gui.widget):
             a.delete()
     def refresh_arrows(self,tbox):
         self.clear_arrows()
+        if vtrue(assets.variables.get("_jfe_hide_tb_arrows", "false")):
+            tbox.showright = False
+            tbox.showleft = False
         if vtrue(assets.variables.get("_textbox_show_button","true")):
             u = uglyarrow()
             self.add_object(u,True)
@@ -549,13 +552,15 @@ class Script(gui.widget):
         line = self.getline()
         while not line:
             if line is None:
-                print "Reached end of script, end it"
+                if vtrue(assets.variables.get("_jfe_no_verbose_logs","false")):
+                    print "Reached end of script, end it"
                 return self._endscript()
             self.si += 1
             line = self.getline()
         self.si += 1
         assets.variables["_currentline"] = str(self.si)
-        print "execute line:",repr(line)
+        if vtrue(assets.variables.get("_jfe_no_verbose_logs","false")):
+            print "execute line:",repr(line)
         return self.safe_exec(self.execute_line,line)
     def _framerate(self,command,fr):
         assets.framerate = int(fr)
@@ -635,7 +640,8 @@ char test
             self.obs.append(error_msg("Invalid command:"+command,line,self.si,self))
             return True
     def execute_macro(self,macroname,args="",obs=None):
-        print "     EXECUTE MACRO:    ",macroname,"from",self.scene
+        if vtrue(assets.variables.get("_jfe_no_verbose_logs","false")):
+            print "     EXECUTE MACRO:    ",macroname,"from",self.scene
         if args: args = " "+args
         scriptlines = ["{"+macroname+args+"}"]
         assets.replace_macros(scriptlines,self.macros)
@@ -732,7 +738,8 @@ char test
         """Ends the currently running script and pops it off the stack. Multiple scripts
         may be running in PyWright, in which case the next script on the stack will
         resume running."""
-        print "ending script",self
+        if vtrue(assets.variables.get("_jfe_no_verbose_logs","false")):
+            print "ending script",self
         if self in assets.stack:
             assets.stack.remove(self)
             if "enter" in self.held: self.held.remove("enter")
@@ -1855,7 +1862,8 @@ The four types of gui you can create are:
             btn.pri = 0
             btn.s_macroname = macroname
             def func(*args):
-                print "exec",macroname
+                if vtrue(assets.variables.get("_jfe_no_verbose_logs","false")):
+                    print "exec",macroname
                 self.goto_result(macroname)
             setattr(btn,text.replace(" ","_"),func)
             btn.hold_func = None
@@ -1909,7 +1917,8 @@ The four types of gui you can create are:
             run = ""
             if args and args[0].startswith("run="): run = args[0].replace("run=","",1)
             self.add_object(guiWait(run=run))
-            print "adding gui wait object and returning true"
+            if vtrue(assets.variables.get("_jfe_no_verbose_logs","false")):
+                print "adding gui wait object and returning true"
             return True
     @category([VALUE('x','x value to place text'),VALUE('y','y value to place text'),VALUE('width','width of text block'),
     VALUE('height','height of text block (determines rows but the value is in pixels)'),
@@ -2168,7 +2177,7 @@ the speed would divide evenly over the distance)."""
             scr.control_last()
         if name:
             scr.control(name)
-        if wait and ((x and abs(speed)<x) or (y and abs(speed)<y) or (z and abs(speed)<z)): 
+        if wait and ((x and abs(speed)<x) or (y and abs(speed)<y) or (z and abs(speed)<z)):
             return True
     @category([COMBINED("filename","Filename of song, searches game/case/music, game/music, and PyWright/music","If no path is listed, music will stop")],type="music")
     def _mus(self,command,*song):

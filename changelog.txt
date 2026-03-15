@@ -1,5 +1,19 @@
 (Note: file not intended for word wrapping)
 
+*PyWright 0.989 - Sempiterna - Beta 01
+		- Inherits all changes from ED Revolutions's 0.989
+		- New globals:
+			- _jfe_modded - Global, always true. This is to allow games to detect whether they are running in
+			  Sempiterna or not.
+			- _jfe_no_verbose_logs - Setting this to "true" will disable most of PyWright's logging features.
+			  Intended to help games which run a lot of code and would normally generate very large logs.
+			- _software_title, _software_version, _software_author, _software_icon
+			  Access variables for the metadata of the current game. May have unpredictable results if
+			  called from within a case. Icon will be returned without a file extension for convenience.
+		- New hotkey bindings:
+			- k_upright, k_upleft, k_downright, k_downleft:
+				- Fires only if both mentioned arrow keys are pressed at once. Only works for buttons in hold mode.
+
 *PyWright 0.988
     ANDROID:
         - First official android version!

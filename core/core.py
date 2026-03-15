@@ -193,6 +193,18 @@ class Variables(dict):
             return {True:"on",False:"off"}[assets.debug_mode]
         if key=="_buildmode":
             return str(assets.cur_script.buildmode)
+        # allows JFE-compatible games to detect whether the engine is modded
+        if key=="_jfe_modded":
+            return "true"
+        # allows JFE-compatible games to access their own metadata
+        if key=="_software_title":
+            return str(get_data_from_folder(assets.game)["title"])
+        if key=="_software_version":
+            return '.'.join(str(x) for x in get_data_from_folder(assets.game)["version"])
+        if key=="_software_author":
+            return str(get_data_from_folder(assets.game)["author"])
+        if key=="_software_icon":
+            return str(get_data_from_folder(assets.game)["icon"].split(".", 1)[0])
         return dict.get(self,key,*args)
     def __setitem__(self,key,value,*args):
         if key=="_speaking":
@@ -236,10 +248,12 @@ class Assets(object):
     screen_refresh = 1
     if android:
         screen_refresh = 3
+    # FIXME: these are supposed to be user-configurable 
+    # but they don't update unless the user changes them in the current session
     sound_format = 44100
     sound_bits = 16
     sound_sign = -1
-    sound_buffer = 4096
+    sound_buffer = 512
     sound_init = 0
     sound_volume = 100
     _music_vol = 100
@@ -444,7 +458,7 @@ set _font_new_resume_size 14""".split("\n"):
         if full in self.fonts:
             return self.fonts[full]
         font = self.get_font(name)
-        imgfont = ImgFont("fonts/p.png",font)
+        imgfont = ImgFont("fonts/p.png",fn,font)
         self.fonts[full] = imgfont
         return imgfont
     def Surface(self,size,flags=0):
@@ -787,7 +801,7 @@ set _font_new_resume_size 14""".split("\n"):
             return
         save_text = f.read()
         f.close()
-        self.load_game_from_string(save_text)
+        self.load_game_from_string(save_text, hide)
     def convert_save_string_to_ob(self,text):
         def read_oldsave(s):
             return eval(s)
@@ -799,7 +813,7 @@ set _font_new_resume_size 14""".split("\n"):
             except:
                 return read_oldsave(s)
         return read_save(text)
-    def load_game_from_string(self,save_text):
+    def load_game_from_string(self,save_text,hide=False):
         self.loading_cache = {}
         things = self.convert_save_string_to_ob(save_text)
         assets.clear()
@@ -835,7 +849,8 @@ set _font_new_resume_size 14""".split("\n"):
                 print "keeping",s
             if not s.parent:
                 d = 1
-        self.cur_script.obs.append(saved(text="Game restored",block=False))
+        if not hide:
+            self.cur_script.obs.append(saved(text="Game restored",block=False))
         self.cur_script.execute_macro("load_defaults")
         self.cur_script.execute_macro("init_court_record_settings")
     def backup(self,path,save):
@@ -976,7 +991,8 @@ def subscript(macro):
     if macro in assets.subscripts:
         return
     script = assets.cur_script.execute_macro(macro)
-    print "start subscript",macro,getattr(script,"scene","(no scene)")
+    if vtrue(assets.variables.get("_jfe_no_verbose_logs","false")):
+        print "start subscript",macro,getattr(script,"scene","(no scene)")
     from engine.script import interpret_scripts
     interpret_scripts()
     return
@@ -1931,6 +1947,9 @@ class textbox(gui.widget):
         
         self.id_name = "_textbox_"
         self.is_cross = False
+        
+        self.bliprate = int(assets.variables.get("_textbox_bliprate","1"))
+        self.bliptick = 0
     def init_cross(self):
         self.is_cross = True
     def init_normal(self):
@@ -2030,12 +2049,12 @@ class textbox(gui.widget):
         self.height1 = self.img.get_height()
         dest.blit(self.img,
             self.rpos1)
-        if self.rightp and self.nextline():
+        if getattr(self,"showright",True) and self.rightp and self.nextline():
             dest.blit(self.rpi.img,[self.rpos1[0]+self.width1-16,
-                self.rpos1[1]+self.height1-16])
+                self.rpos1[1]+self.height1-27])
         if getattr(self,"showleft",False) and self.nextline():
             dest.blit(pygame.transform.flip(self.rpi.img,1,0),[self.rpos1[0],
-                self.rpos1[1]+self.height1-16])
+                self.rpos1[1]+self.height1-27])
         #End
         x = assets.variables.get("_nt_x","")
         y = assets.variables.get("_nt_y","")
@@ -2184,14 +2203,15 @@ class textbox(gui.widget):
         else:
             if not hasattr(self,"_lc"):
                 self._lc = ""
+            defaultpunct = not vtrue(assets.variables.get("_jfe_defaultpunct_disabled", "false"))
             self.go = 1
-            if self._lc in [".?"] and char == " ":
+            if self._lc in [".?"] and char == " " and defaultpunct:
                 next_char = 6
-            if self._lc in ["!"] and char == " ":
+            if self._lc in ["!"] and char == " " and defaultpunct:
                 next_char = 8
-            if self._lc in [","] and char == " ":
+            if self._lc in [","] and char == " " and defaultpunct:
                 next_char = 4
-            if self._lc in ["-"] and (char.isalpha() or char.isdigit()):
+            if self._lc in ["-"] and (char.isalpha() or char.isdigit()) and defaultpunct:
                 next_char = 4
             if char in ["("]:
                 self.in_paren = 1
@@ -2203,8 +2223,11 @@ class textbox(gui.widget):
                     assets.portrait.set_talking()
                 if self.in_paren:
                     assets.portrait.set_blinking()
-            if str(char).strip() and run_code:
-                assets.play_sound(self.clicksound,volume=random.uniform(0.65,1.0))
+            if str(char).strip() and run_code and self.bliptick % self.bliprate == 0:
+                assets.play_sound(self.clicksound,volume=1.0)
+            self.bliptick += 1
+            if not str(char).strip() and run_code:
+                self.bliptick = 0
             next_char = int(next_char*self.delay)
             if self.wait=="manual":
                 if char.strip():
@@ -2276,11 +2299,12 @@ class textbox(gui.widget):
                     title = False
                 else:
                     img = assets.get_image_font("tb").render(line,color)
+                    imgfull = assets.get_image_font("tb").render(self._markup.fulltext().split("\n")[i - 1],color)
                     color = ImgFont.lastcolor
                     if "{center}" in line:
                         center = not center
                     if center:
-                        x = (assets.sw-img.get_width())//2
+                            x = (assets.sw-imgfull.get_width())//2
                     if x+img.get_width()>assets.sw:
                         if not getattr(self,"OVERAGE",None) and vtrue(assets.variables.get("_debug","false")):
                             self.OVERAGE = x+img.get_width()-assets.sw
@@ -3683,6 +3707,10 @@ class textblock(sprite):
         x = self.pos[0]
         y = self.pos[1]
         i = 0
+        try:
+            lineheight = int(assets.variables["_font_block_lineheight"])
+        except ValueError:
+            lineheight = 10
         for line in self.lines:
             for word in line:
                 nl = False
@@ -3693,14 +3721,18 @@ class textblock(sprite):
                     wordi.fill([0,0,0,0])
                 if wordi.get_width()+x>self.pos[0]+self.size[0] or nl:
                     x = self.pos[0]
-                    y += 10
+                    y += lineheight
                 if y>self.pos[1]+self.size[1]:
                     break
                 dest.blit(wordi,[x,y])
-                x += wordi.get_width()+4
+                try:
+                    spacing = int(assets.variables["_font_block_spacing"]) + 4
+                except ValueError:
+                    spacing = 4
+                x += wordi.get_width()+spacing
                 i += 1
             x = self.pos[0]
-            y += 10
+            y += lineheight
             
 class waitenter(sprite):
     def __init__(self):
@@ -3811,7 +3843,8 @@ class scroll(effect):
         #print "after self.amtx:",self.amtx
         if self.amtx<0:
             ndx+=self.amtx*(self.dx/abs(self.dx))
-            print "self.amtx<0 ndx:",ndx
+            if vtrue(assets.variables.get("_jfe_no_verbose_logs","false")):
+                print "self.amtx<0 ndx:",ndx
             self.amtx=0
         self.amty-=abs(ndy)
         if self.amty<0:
